@@ -1,5 +1,6 @@
 use futures::future::join_all;
 use tokio::task::JoinHandle;
+use std::time::Duration;
 
 
 #[tokio::main]
@@ -94,6 +95,7 @@ fn get_custom_client() -> reqwest::Client {
     let user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0";
     let client = reqwest::Client::builder()
                                 .user_agent(user_agent)
+                                .timeout(Duration::from_secs(30))
                                 .build();
     client.expect("issue creating a custom client")
 }
