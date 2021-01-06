@@ -5,14 +5,26 @@ use std::time::Duration;
 use std::fs::File;
 use std::io::BufReader;
 use log::{info, error};
+use clap::{Arg,App};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let matches = App::new("*** Alexa website checker ***")
+                                .version("0.1")
+                                .author("Arun")
+                                .about("Checks access to alexa websites")
+                            .arg(Arg::with_name("file")
+                                .long("file")
+                                .help("filename with the list of websites to check, default: websites.txt")
+                                .takes_value(true))
+                            .get_matches();
+
+    let path = matches.value_of("file").unwrap_or("websites.txt");
     // enable environment logger. use RUST_LOG=info to start logging
     env_logger::init();
     // read the list of websites from a file
     // let alexa_websites = get_websites().expect("something went wrong while getting the list of websites");
-    let alexa_websites = get_websites_from_file("./sites/CA_sites.txt").expect("something went wrong while getting the list of websites");    
+    let alexa_websites = get_websites_from_file(path).expect("something went wrong while getting the list of websites");    
 
     // Create a list of empty tasks
     let mut tasks: Vec<JoinHandle<()>> = Vec::new();
