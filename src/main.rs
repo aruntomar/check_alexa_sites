@@ -7,6 +7,13 @@ use std::io::BufReader;
 use log::{info, error};
 use clap::{Arg,App};
 
+// struct WebSiteStatus {
+//     id: u32,
+//     url: String,
+//     accessible: bool,
+//     counter: u8,
+// }
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("*** Alexa website checker ***")
@@ -25,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .get_matches();
 
     let path = matches.value_of("file").unwrap_or("websites.txt");
-    let retries: u32 = matches.value_of("retires").unwrap_or("3").parse::<u32>().unwrap();
+    let _retries: u32 = matches.value_of("retires").unwrap_or("3").parse::<u32>().unwrap();
     // enable environment logger. use RUST_LOG=info to start logging
     env_logger::init();
     // read the list of websites from a file
@@ -39,8 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let url = site.clone();
         let site = site.to_owned();
         tasks.push(tokio::spawn(async move {
-            // Build a client with custom user agent 
-            // "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0"
+            // Build a client with custom user agent "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0"
             let client = get_custom_client();
             // let mut counter = 0;
             match client.get(&url).send().await {
@@ -48,7 +54,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // log the site & status
                     info!("ID: {} Success: url: {} - {:#?}", id, site, resp.status().as_str());
                 },
-                Err(e) => error!("ID: {} Fail: {} - {:#?}", id, url, e.to_string())
+                Err(e) => {    
+                    error!("ID: {} Fail: {} - {:#?}", id, url, e.to_string())                    
+                }
             } 
         }));
     }
