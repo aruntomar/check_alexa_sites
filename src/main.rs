@@ -4,10 +4,12 @@ use tokio::task::JoinHandle;
 use std::time::Duration;
 use std::fs::File;
 use std::io::BufReader;
+use log::{info, error};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
+    // enable environment logger. use RUST_LOG=info to start logging
+    env_logger::init();
     // read the list of websites from a file
     // let alexa_websites = get_websites().expect("something went wrong while getting the list of websites");
     let alexa_websites = get_websites_from_file("./sites/CA_sites.txt").expect("something went wrong while getting the list of websites");    
@@ -24,9 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             match client.get(&url).send().await {
                 Ok(resp) => {
                     // log the site & status
-                    println!("Site: {} - Status {:#?}", site, resp.status().as_str());
+                    info!("Success: url: {} - {:#?}", site, resp.status().as_str());
                 },
-                Err(_) => println!("Error accessing the site {}", url),
+                Err(e) => error!("Fail: {} - {:#?}", url, e.to_string()),
             } 
         }));
     }
