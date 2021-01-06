@@ -11,15 +11,21 @@ use clap::{Arg,App};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("*** Alexa website checker ***")
                                 .version("0.1")
-                                .author("Arun")
+                                .author("Arun <tomar.arun@gmail.com>")
                                 .about("Checks access to alexa websites")
                             .arg(Arg::with_name("file")
                                 .long("file")
                                 .help("filename with the list of websites to check, default: websites.txt")
                                 .takes_value(true))
+                            .arg(Arg::with_name("retries")
+                                .long("retries")
+                                .help("number of retries")
+                                .takes_value(true)
+                            )
                             .get_matches();
 
     let path = matches.value_of("file").unwrap_or("websites.txt");
+    let retries: u32 = matches.value_of("retires").unwrap_or("3").parse::<u32>().unwrap();
     // enable environment logger. use RUST_LOG=info to start logging
     env_logger::init();
     // read the list of websites from a file
@@ -29,18 +35,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a list of empty tasks
     let mut tasks: Vec<JoinHandle<()>> = Vec::new();
     // Connect to each website asynchronously in separate task
-    for site in alexa_websites {
+    for (id,site) in alexa_websites.iter().enumerate() {
         let url = site.clone();
+        let site = site.to_owned();
         tasks.push(tokio::spawn(async move {
             // Build a client with custom user agent 
             // "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0"
-            let client = get_custom_client();    
+            let client = get_custom_client();
+            // let mut counter = 0;
             match client.get(&url).send().await {
                 Ok(resp) => {
                     // log the site & status
-                    info!("Success: url: {} - {:#?}", site, resp.status().as_str());
+                    info!("ID: {} Success: url: {} - {:#?}", id, site, resp.status().as_str());
                 },
-                Err(e) => error!("Fail: {} - {:#?}", url, e.to_string()),
+                Err(e) => error!("ID: {} Fail: {} - {:#?}", id, url, e.to_string())
             } 
         }));
     }
