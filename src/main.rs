@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let site = site.to_owned();
         tasks.push(tokio::spawn(async move {
             // Build a client with custom user agent "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0"
-            let client = get_custom_client();
+            let client = get_custom_client().unwrap();
             // let mut counter = 0;
             match client.get(&url).send().await {
                 Ok(resp) => {
@@ -66,13 +66,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn get_custom_client() -> reqwest::Client {
+fn get_custom_client() -> Result<reqwest::Client, reqwest::Error> {
     let user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0";
     let client = reqwest::Client::builder()
                                 .user_agent(user_agent)
                                 .timeout(Duration::from_secs(30))
                                 .build();
-    client.expect("issue creating a custom client")
+    client
 }
 
 fn get_websites_from_file(path: &str) -> Result<Vec<String>,Box<dyn std::error::Error>> {
@@ -83,4 +83,31 @@ fn get_websites_from_file(path: &str) -> Result<Vec<String>,Box<dyn std::error::
         websites.push(line.expect("error reading line"));
     }
     Ok(websites)
+}
+
+#[cfg(test)]
+
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_get_custom_client() {
+        let client = get_custom_client();
+        assert!(client.is_ok());
+        assert!(!client.is_err());
+    }
+
+    #[test]
+    fn test_get_websites_from_file() {
+        let sites = get_websites_from_file("websites.txt");
+        assert!(sites.is_ok());
+    }
+
+    #[test]
+    #[should_panic(expected = "Couldn't open file")]
+    fn test_get_websites_from_file_panic(){
+        let sites = get_websites_from_file("website.txt");
+        assert!(sites.is_err());
+    }
 }
